@@ -80,16 +80,11 @@ def check_directories(base_dir, dirs):
 def download_and_unzip(url, target_dir, zip_filename):
 
     try:
-        # Download the zip file
-        urllib.request.urlretrieve(url, zip_filename)
-
-        # Unzip the file
-        with zipfile.ZipFile(zip_filename, 'r') as zip_ref:
-            zip_ref.extractall(target_dir)
-
-        # Remove the zip file
-        os.remove(zip_filename)
-
+        from huggingface_hub import snapshot_download
+        snapshot_download(
+            repo_id='myshell-ai/OpenVoiceV2',
+            local_dir=os.path.join(target_dir, 'checkpoints_v2')
+        )
         return None, None
 
     except Exception as e:
