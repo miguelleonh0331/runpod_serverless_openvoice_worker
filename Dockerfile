@@ -48,5 +48,7 @@ RUN python3 -m pip install --upgrade pip && \
     python3 -m unidic download && \
     rm /app/requirements.txt
 
+RUN python3 -m pip install "setuptools<81"
+
 # Set the default command to run the handler
 CMD ["python3", "-u", "/app/handler.py"]
