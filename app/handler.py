@@ -124,6 +124,7 @@ def upload_to_s3(local_file, bucket_name, object_name):
                                  endpoint_url=os.getenv('BUCKET_ENDPOINT_URL'),
                                  aws_access_key_id=os.getenv('BUCKET_ACCESS_KEY_ID'),
                                  aws_secret_access_key=os.getenv('BUCKET_SECRET_ACCESS_KEY'),
+                                 region_name='eu-ro-1',
                                  config=Config(signature_version='s3v4'))
 
         s3_client.upload_file(local_file, bucket_name, object_name, ExtraArgs={'ACL': 'public-read'})
