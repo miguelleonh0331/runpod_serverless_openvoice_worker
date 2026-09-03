@@ -36,6 +36,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libavutil-dev libswscale-dev libswresample-dev libavfilter-dev \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python3 -m pip install "cython<3" && \
+    python3 -m pip install av==10.0.0 --no-build-isolation
+    
 # Install required pip modules
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install tensorboard==2.13.0 && \
