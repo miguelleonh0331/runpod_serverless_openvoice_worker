@@ -31,6 +31,11 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
 # Set LD_LIBRARY_PATH environment variable
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.9/dist-packages/nvidia/cudnn/lib
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config libavformat-dev libavcodec-dev libavdevice-dev \
+    libavutil-dev libswscale-dev libswresample-dev libavfilter-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install required pip modules
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install tensorboard==2.13.0 && \
