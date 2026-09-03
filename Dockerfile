@@ -32,7 +32,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.9/dist-packages/nvidia/cudnn/lib
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config build-essential \
+    pkg-config build-essential python3.9-dev \
     libavformat-dev libavcodec-dev libavdevice-dev \
     libavutil-dev libswscale-dev libswresample-dev libavfilter-dev \
     && rm -rf /var/lib/apt/lists/*
