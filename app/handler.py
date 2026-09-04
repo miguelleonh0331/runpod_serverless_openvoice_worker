@@ -21,6 +21,7 @@ import hashlib
 import datetime
 import sys
 import os
+import shutil
 import torch
 from openvoice import se_extractor
 from openvoice.api import ToneColorConverter
@@ -127,7 +128,7 @@ def upload_to_s3(local_file, bucket_name, object_name):
                                  region_name='eu-ro-1',
                                  config=Config(signature_version='s3v4', s3={'addressing_style': 'path'}))
 
-        s3_client.upload_file(local_file, bucket_name, object_name, ExtraArgs={'ACL': 'public-read'})
+        s3_client.upload_file(local_file, bucket_name, object_name)
 
         return f"{os.getenv('BUCKET_ENDPOINT_URL')}/{bucket_name}/{object_name}", None
 
