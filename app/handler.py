@@ -13,8 +13,7 @@ import urllib.request
 import zipfile
 import requests
 import warnings
-import boto3
-from botocore.config import Config
+import base64
 import random
 import string
 import hashlib
@@ -117,21 +116,15 @@ def download_file(url, local_filename):
     except Exception as e:
         return None, e
 
-''' Uploads a file to an S3 bucket and makes it publicly readable.
-    ENV variables BUCKET_ENDPOINT_URL, BUCKET_ACCESS_KEY_ID, and BUCKET_SECRET_ACCESS_KEY are required '''
-def upload_to_s3(local_file, bucket_name, object_name):
+''' Reads a local file and returns its contents as a base64-encoded string.
+    Used instead of S3 upload because RunPod's S3-compatible API does not
+    support ACLs or pre-signed URLs, so uploaded objects can never be made
+    publicly downloadable via a plain URL. '''
+def encode_file_base64(local_file):
     try:
-        s3_client = boto3.client('s3',
-                                 endpoint_url=os.getenv('BUCKET_ENDPOINT_URL'),
-                                 aws_access_key_id=os.getenv('BUCKET_ACCESS_KEY_ID'),
-                                 aws_secret_access_key=os.getenv('BUCKET_SECRET_ACCESS_KEY'),
-                                 region_name='eu-ro-1',
-                                 config=Config(signature_version='s3v4', s3={'addressing_style': 'path'}))
-
-        s3_client.upload_file(local_file, bucket_name, object_name)
-
-        return f"{os.getenv('BUCKET_ENDPOINT_URL')}/{bucket_name}/{object_name}", None
-
+        with open(local_file, 'rb') as f:
+            encoded = base64.b64encode(f.read()).decode('utf-8')
+        return encoded, None
     except Exception as e:
         return None, e
 
@@ -158,13 +151,11 @@ def sync_checkpoints(url, target_dir, zip_filename, required_dirs):
         else:
             return None, None
 
-''' Call openview model to convert text to speech
-    ENV variable BUCKET_NAME can set your bucket name, which defaults to OpenVoive'''
+''' Call openview model to convert text to speech '''
 def generate_wav(language, text, reference_speaker='resources/example_reference.mp3', speed=1.0):
 
     try:
         # Prepare defaults
-        bucket_name = os.getenv('BUCKET_NAME', 'OpenVoice')
         ckpt_converter = 'checkpoints_v2/converter'
 
         output_dir = 'outputs_v2'
@@ -205,14 +196,12 @@ def generate_wav(language, text, reference_speaker='resources/example_reference.
                 output_path=output_audio_path,
                 message=encode_message)
 
-        # Upload audio to S3 bucket
-        object_name = os.path.basename(output_audio_path)
-
-        uploaded_url, error = upload_to_s3(output_audio_path, bucket_name, object_name)
+        # Encode resulting audio as base64 to return directly in the job response
+        audio_base64, error = encode_file_base64(output_audio_path)
         if error:
             return None, error
 
-        return uploaded_url, None
+        return audio_base64, None
 
     except Exception as e:
         return None, e
@@ -265,13 +254,14 @@ def handler(job):
         print(f'ERROR in download_file: {error}')
         sys.exit(1)
     else:
-        output_audio_url, error = generate_wav(language=language, text=text, reference_speaker=reference_speaker, speed=speed)
+        output_audio_base64, error = generate_wav(language=language, text=text, reference_speaker=reference_speaker, speed=speed)
         if error:
             print(f'ERROR in generate_wav: {error}')
             sys.exit(1)
         else:
             return {
-                'output_audio_url': output_audio_url
+                'output_audio_base64': output_audio_base64,
+                'format': 'wav'
             }
 
 if __name__ == '__main__':
